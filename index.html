@@ -4,15 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SOSH Kanta Validointityökalu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>SOSH Kanta Validointyökalu</h1><br>
-    <label for="kehysFile">Valitse Interface message xml-tiedosto:</label>
-    <input type="file" id="kehysFile" accept=".xml"><br><br>
-    <label for="asiakirjaFile">Valitse SourceXML.xml tiedosto:</label>
-    <input type="file" id="asiakirjaFile" accept=".xml"><br><br>
-    <button id="startButton">Käynnistä</button>
-    <pre id="output"></pre>
-    <script src="script.js"></script>
+
+    <div class="container">
+        <h1>SOSH Kanta Validointityökalu</h1>
+        <p>Valitse XML-tiedostot ja aloita validointi.</p>
+        <button id="startButton">Käynnistä</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // API endpoint
+        const url = "http://shvalidaattori.at.kanta.fi/shark-validointi/validoi/asiakirja/tulos";
+
+        document.getElementById("startButton").addEventListener("click", function() {
+            // Siirry tiedoston valintaan ja lue tiedostot
+            let kehysFile = document.createElement("input");
+            kehysFile.type = "file";
+            kehysFile.accept = ".xml";
+            kehysFile.click();
+
+            kehysFile.addEventListener("change", function() {
+                let asiakirjaFile = document.createElement("input");
+                asiakirjaFile.type = "file";
+                asiakirjaFile.accept = ".xml";
+                asiakirjaFile.click();
+
+                asiakirjaFile.addEventListener("change", function() {
+                    // Lue molemmat XML-tiedostot
+                    const kehysReader = new FileReader();
+                    kehysReader.readAsText(kehysFile.files[0]);
+                    
+                    kehysReader.onload = function() {
+                        const kehysXml = kehysReader.result;
+                        const asiakirjaReader = new FileReader();
+                        asiakirjaReader.readAsText(asiakirjaFile.files[0]);
+
+                        asiakirjaReader.onload = function() {
+                            const asiakirjaXml = asiakirjaReader.result;
+                            
+                            // Analysoi XML-tiedostot ja etsi 'reasonCode'
+                            const parser = new DOMParser();
+                            const xmlDoc = parser.parseFromString(kehysXml, "text/xml");
+                            const reasonCodeElement = xmlDoc.querySelector("controlActProcess reasonCode");
+
+                            let reasonCode = reasonCodeElement ? reasonCodeElement.getAttribute("code") : null;
+
+                            if (reasonCode) {
+                                // Lähetä POST-pyyntö
+                                const data = {
+                                    messageId: "1234567890",
+                                    palveluPyynto: reasonCode,
+                                    level: "1",
+                                    siirtokehysXml: kehysXml,
+                                    asiakirjaXml: asiakirjaXml
+                                };
+
+                                const headers = {
+                                    "Content-Type": "application/json",
+                                };
+
+                                fetch(url, {
+                                    method: 'POST',
+                                    headers: headers,
+                                    body: JSON.stringify(data)
+                                })
+                                .then(response => response.json())
+                                .then(responseData => {
+                                    // Näytä tulos
+                                    const resultDiv = document.getElementById("result");
+                                    resultDiv.style.display = "block";
+                                    resultDiv.innerHTML = `<pre>${JSON.stringify(responseData, null, 4)}</pre>`;
+                                })
+                                .catch(error => {
+                                    alert("Virhe pyyntöä tehdessä: " + error);
+                                });
+                            } else {
+                                alert("reasonCode-elementtiä ei löytynyt XML:stä.");
+                            }
+                        };
+                    };
+                });
+            });
+        });
+    </script>
+
 </body>
 </html>
