@@ -30,6 +30,13 @@
             border: 1px solid #ccc;
             display: none;
         }
+        #fileNames {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -38,31 +45,45 @@
         <h1>SOSH Kanta Validointityökalu</h1>
         <p>Valitse XML-tiedostot ja aloita validointi.</p>
         <button id="startButton">Käynnistä</button>
-        <div id="result"></div>
+        <div id="fileNames"></div>  <!-- Näytetään valitut tiedostot -->
+        <div id="result"></div>     <!-- Näytetään API:n vastaus -->
     </div>
 
     <script>
         // API endpoint
-        const url = "https://shvalidaattori.at.kanta.fi/shark-validointi/validoi/asiakirja/tulos";
+        const url = "http://shvalidaattori.at.kanta.fi/shark-validointi/validoi/asiakirja/tulos";
 
         document.getElementById("startButton").addEventListener("click", function() {
-            // Siirry tiedoston valintaan ja lue tiedostot
+            // Luo tiedostovalintaikkuna siirtokehys-tiedostolle
             let kehysFile = document.createElement("input");
             kehysFile.type = "file";
             kehysFile.accept = ".xml";
             kehysFile.click();
 
             kehysFile.addEventListener("change", function() {
+                // Luo tiedostovalintaikkuna asiakirja-tiedostolle
                 let asiakirjaFile = document.createElement("input");
                 asiakirjaFile.type = "file";
                 asiakirjaFile.accept = ".xml";
                 asiakirjaFile.click();
 
                 asiakirjaFile.addEventListener("change", function() {
+                    // Näytä valitut tiedostot
+                    const kehysFileName = kehysFile.files[0] ? kehysFile.files[0].name : "Ei tiedostoa valittu";
+                    const asiakirjaFileName = asiakirjaFile.files[0] ? asiakirjaFile.files[0].name : "Ei tiedostoa valittu";
+
+                    document.getElementById("fileNames").innerHTML = `
+                        <p>Valitut tiedostot:</p>
+                        <ul>
+                            <li>Siirtokehys: ${kehysFileName}</li>
+                            <li>Asiakirja: ${asiakirjaFileName}</li>
+                        </ul>
+                    `;
+
                     // Lue molemmat XML-tiedostot
                     const kehysReader = new FileReader();
                     kehysReader.readAsText(kehysFile.files[0]);
-                    
+
                     kehysReader.onload = function() {
                         const kehysXml = kehysReader.result;
                         const asiakirjaReader = new FileReader();
