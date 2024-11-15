@@ -51,7 +51,6 @@
 
     <script>
         // API endpoint
-        const proxyUrl = 'https://proxy.cors.sh/';
         const url = "http://shvalidaattori.at.kanta.fi/shark-validointi/validoi/asiakirja/tulos";
 
         document.getElementById("startButton").addEventListener("click", function() {
@@ -115,7 +114,7 @@
                                     'Accept': 'application/json'
                                 };
 
-                                fetch(proxyUrl + url, {
+                                fetch(url, {
                                     method: 'POST',
                                     headers: headers,
                                     body: JSON.stringify(data)
